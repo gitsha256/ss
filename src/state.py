@@ -1,9 +1,7 @@
- 
-from typing import TypedDict
-from dataclasses import dataclass
+from typing import TypedDict, Optional
 
-#@dataclass
-class CodingAssistantState(TypedDict):
-    question: str
-    answer: str
-    # You can add more state variables if needed
+
+class CodingAssistantState(TypedDict, total=False):
+    question: Optional[str]
+    answer: Optional[str]
+    language: Optional[str]

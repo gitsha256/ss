@@ -10,15 +10,5 @@ class CodingAssistantCrew:
         self.answer_agent = agents.answer_agent()
         self.tasks = CodingAssistantTasks()
 
-    def kickoff(self, state):
-        print("### Starting Coding Assistant Workflow")
-        crew = Crew(
-            agents=[self.capture_agent, self.no_question_agent, self.answer_agent],
-            tasks=[
-                self.tasks.capture_and_identify_task(self.capture_agent),
-                # Subsequent tasks are managed by LangGraph
-            ],
-            verbose=True
-        )
-        result = crew.kickoff()
-        return {**state, "result": result}
+    def kickoff(self, state=None):
+        return None
