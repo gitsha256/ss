@@ -1,237 +1,316 @@
- 
-### **This repository is actively maintained and updated. Stay tuned for upcoming features!**
-## **LeetCode Coding multi-agent AI Assistant with LangGraph and Graph reasoning - Project README**
+Coding Assistant AI — Multi-Agent Screen Solver with LangGraph & Free LLM Routing
+Status: Active. Works on LeetCode, Codeforces, HackerRank, HackerEarth, and most online judges.
+Cost: Free. No OpenAI credits required.
 
----
+Table of Contents
+Introduction
 
-### **Table of Contents**
+Project Features
 
-1. [Introduction](#introduction)
-2. [Project Features](#project-features)
-3. [System Architecture](#system-architecture)
-4. [File Structure](#file-structure)
-5. [Setup Instructions](#setup-instructions)
-6. [Running the Application](#running-the-application)
-7. [Key Components](#key-components)
-    - Agents
-    - Tasks
-    - Tools
-    - LangGraph Workflow
-    - Database
-    - RAG Support
-8. [Logging with Weave and LangSmith](#logging-with-weave-and-langsmith)
-9. [Dependencies](#dependencies)
-10. [Future Enhancements](#future-enhancements)
-11. [Contributing](#contributing)
-12. [License](#license)
+System Architecture
 
----
+File Structure
 
-### **1. Introduction**
+Setup Instructions
 
-The **Coding Assistant AI** is an intelligent assistant application that captures screenshots, extracts coding questions, and answers them using a multi-agent architecture powered by **CrewAI** and **LangGraph**. It uses **OpenAI's GPT-3.5** to generate answers to coding questions and supports advanced reasoning with **RAG** (Retrieval Augmented Generation). The assistant can handle cases where no question is found and can log activities using **Weave** and **LangSmith**. All interactions, including questions and answers, are stored in a **SQLite** database for future reference.
+Running the Application
 
----
+Key Components
 
-### **2. Project Features**
+Multi-Language Support
 
-- **Multi-Agent System**: Built using CrewAI, with dedicated agents for screen capture, question extraction, and answering.
-- **Conditional Workflow**: Managed via LangGraph, with branches for different states (e.g., no question found).
-- **Advanced Reasoning**: Supports Retrieval Augmented Generation (RAG) for better context-based answers.
-- **Screenshot Capture**: Takes screenshots when `Ctrl+S` is pressed.
-- **OCR Support**: Extracts coding questions from screenshots using **Tesseract OCR**.
-- **Database Storage**: Stores questions and answers in a **SQLite** database for easy retrieval.
-- **Logging**: Uses **Weave** and **LangSmith** for structured logging and event tracing.
-- **RAG Knowledge Base**: Supports retrieval of relevant information from a knowledge base to augment GPT-3.5 answers.
+Configuration
 
----
+Dependencies
 
-### **3. System Architecture**
+Troubleshooting
 
-The application is built around a multi-agent system where each agent performs a specific task. The process is orchestrated using LangGraph, which manages the flow from screen capture to question identification and answer generation.
+Future Enhancements
 
-#### High-Level Workflow:
-1. **z Trigger**: The user presses `z`, triggering the screen capture agent.
-2. **Screenshot and OCR**: The screenshot is processed to extract a coding question using OCR.
-3. **Agent Workflow**: If a question is found, the answer agent generates a response using GPT-3.5. If no question is found, a handling agent provides feedback.
-4. **Database Storage**: The question and its corresponding answer are saved in the database.
-5. **RAG Search**: The answer agent can augment the GPT-3.5 response with relevant information from a RAG knowledge base.
+License
 
----
+1. Introduction
+The Coding Assistant AI is a desktop assistant that captures your screen, extracts the coding problem visible on it via OCR, and produces a complete solution using a multi-agent system powered by CrewAI and LangGraph.
 
-### **4. File Structure**
+It runs entirely on free LLM infrastructure through a local FreeLLMAPI router that aggregates free-tier providers (Groq, Google AI Studio, Cerebras, Mistral, OpenRouter, and more). No OpenAI credits are required.
 
-```
-/ss/
+The assistant detects the programming language from the problem page, generates judge-ready code in that language, validates it when possible, and saves both the explanation and the pasteable solution to disk. All Q&A pairs are stored in a local SQLite database for history.
+
+2. Project Features
+Z Hotkey Capture — Press Z anywhere to capture and solve.
+
+Esc to Quit — Press Esc at any time to shut down instantly.
+
+Multi-Agent System — Dedicated CrewAI agents for solving and feedback.
+
+OCR Extraction — Tesseract OCR reads the problem text directly from your screen.
+
+Automatic Language Detection — Detects 15+ languages (Python, JavaScript, TypeScript, Go, Rust, Java, C++, C#, Kotlin, Swift, Ruby, PHP, Scala, Haskell, Elixir, Dart, R).
+
+Judge-Ready Output — Solutions are formatted for the target judge (LeetCode's class Solution, Codeforces' stdin/stdout, Go's package main, etc.).
+
+Python Syntax Validation — ast.parse catches broken generated code before you paste it.
+
+Clean Console Output — No CLI panels, no telemetry spam.
+
+SQLite History — Every solved problem is logged to qa.db.
+
+Free LLM Router — Pluggable via FreeLLMAPI, no paid API keys needed.
+
+Recursion-Safe Workflow — Runs indefinitely without hitting LangGraph's default recursion limit.
+
+3. System Architecture
+text
+┌─────────────────┐
+│  User presses Z │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────────────┐
+│  LangGraph: wait_for_   │
+│  next_trigger           │
+└────────┬────────────────┘
+         │
+         ▼
+┌─────────────────────────┐
+│  capture_and_identify   │ ◄── Direct tool call (no LLM)
+│  - Screenshot via PIL   │
+│  - OCR via Tesseract    │
+│  - Detect language      │
+└────────┬────────────────┘
+         │
+         ▼
+┌─────────────────────────┐
+│  check_question_found   │
+└────┬──────────────┬─────┘
+     │              │
+     │ found        │ not found
+     ▼              ▼
+┌──────────┐   ┌──────────────────┐
+│ answer_  │   │ handle_no_       │
+│ question │   │ question         │
+│ (CrewAI) │   └──────────────────┘
+└────┬─────┘
+     │
+     ▼
+┌─────────────────────────┐
+│  store_result           │
+│  - Save to SQLite       │
+│  - Write answers/*.md   │
+│  - Write latest_code.*  │
+│  - Validate Python      │
+└────────┬────────────────┘
+         │
+         ▼
+    (loop back to wait)
+4. File Structure
+text
+/leetcode_assistant/
 │
-├── /screenshots/          # Stores screenshots taken by the assistant
-├── agents.py              # Defines CrewAI agents for capturing, extracting, and answering questions
-├── crew.py                # Manages the multi-agent crew and task orchestration
-├── database.py            # Handles SQLite database connections and Q&A storage
-├── graph.py               # LangGraph workflow definition
-├── main.py                # Main entry point for running the application
-├── nodes.py               # Nodes for LangGraph, handling individual steps in the workflow
-├── rag.py                 # Implements the RAG (Retrieval Augmented Generation) knowledge base
-├── state.py               # Defines the state structure used by the LangGraph workflow
-├── tasks.py               # Defines tasks for agents to perform (screen capture, answering questions, etc.)
-├── tools.py               # Provides reusable tools for agents (screen capture, OCR, answering, etc.)
-├── app.log                # Log file generated by Weave for event tracking
-└── .env                   # Environment file for sensitive information (e.g., API keys)
-```
+├── answers/                     # Generated solutions
+│   ├── latest_answer.md         # Full explanation + code
+│   ├── latest_code.py           # Python submission
+│   ├── latest_code.js           # JavaScript submission
+│   ├── latest_code.go           # Go submission
+│   └── ...                      # Extension matches detected language
+│
+├── screenshots/                 # Timestamped screenshots
+│
+├── src/
+│   ├── crew/
+│   │   ├── agents.py            # CrewAI agents
+│   │   ├── crew.py              # Crew orchestration
+│   │   ├── tasks.py             # Task definitions (multi-language prompts)
+│   │   └── tools.py             # CaptureAndExtractTool
+│   ├── database.py              # SQLite storage
+│   ├── graph.py                 # LangGraph workflow
+│   ├── nodes.py                 # Workflow nodes + language detection
+│   └── state.py                 # TypedDict state
+│
+├── main.py                      # Entry point
+├── .env                         # Router URL + model name
+├── qa.db                        # SQLite history
+└── requirements.txt
+5. Setup Instructions
+Prerequisites
+Python 3.10+
 
----
+Tesseract OCR installed and on your PATH
 
-### **5. Setup Instructions**
+Windows: UB-Mannheim installer
 
-#### **Prerequisites**
+Linux: sudo apt install tesseract-ocr
 
-1. **Python 3.8+**
-2. **Tesseract OCR** installed on your machine.
-    - **Windows**: [Download Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki)
-    - **Linux**: `sudo apt-get install tesseract-ocr`
-    - **MacOS**: `brew install tesseract`
-3. **OpenAI API Key** (For GPT-3.5)
+macOS: brew install tesseract
 
-#### **Installation Steps**
+FreeLLMAPI — unified local router for free LLM providers
 
-1. **Clone the Repository**:
-    ```bash
-    git clone https://github.com/gitsha256/ss.git
-    cd ss
-    ```
+Download from the FreeLLMAPI releases page
 
-2. **Create a Virtual Environment** (optional but recommended):
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-    ```
+Install and launch the desktop app (runs on http://localhost:3001)
 
-3. **Install Required Packages**:
-    ```bash
-    pip install -r requirements.txt
-    ```
+Installation
+bash
+git clone https://github.com/yourusername/coding-assistant-ai.git
+cd coding-assistant-ai
+python -m venv venv
+venv\Scripts\activate          # Windows
+pip install -r requirements.txt
+Configure FreeLLMAPI
+Launch the FreeLLMAPI desktop app.
 
-4. **Create `.env` file**:
-    - Add your OpenAI API key and other sensitive information.
-    ```bash
-    touch .env
-    ```
-    Inside `.env`:
-    ```
-    OPENAI_API_KEY=your_openai_api_key_here
-    ```
+Go to the Keys page and add at least one provider key:
 
-5. **Create the Screenshots Directory**:
-    ```bash
-    mkdir screenshots
-    ```
+Groq — https://console.groq.com (free tier: 1,000 req/day)
 
----
+Google AI Studio — https://aistudio.google.com (generous free tier)
 
-### **6. Running the Application**
+Cerebras — https://cloud.cerebras.ai (fast free tier)
 
-1. Run the application with:
-   ```bash
-   python main.py
-   ```
+Copy the Unified API Key from the dashboard header.
 
-2. **Trigger the Workflow**:
-   - Press `z` to capture a screenshot and start the question identification and answering process.
+In the Models page, ensure gpt-oss-120b (Groq) or another tool-capable model is at the top of the fallback chain.
 
-3. **Logging**:
-   - Logs will be written to `app.log` by Weave, capturing all important events.
+Configure .env
+env
+OPENAI_API_BASE=http://localhost:3001/v1
+OPENAI_API_KEY=freellmapi-your-unified-key-here
+OPENAI_MODEL_NAME=gpt-oss-120b
 
-4. **View Questions and Answers**:
-   - The SQLite database `qa.db` will store the extracted coding questions and their corresponding answers.
+CREWAI_TELEMETRY_OPT_OUT=true
+CREWAI_DISABLE_TELEMETRY=true
+OTEL_SDK_DISABLED=true
+CREWAI_DISABLE_RICH_LOGGING=true
 
----
+LANGCHAIN_TRACING_V2=false
+LANGCHAIN_API_KEY=
+LANGCHAIN_ENDPOINT=
+Create Required Directories
+bash
+mkdir screenshots
+mkdir answers
+6. Running the Application
+bash
+python main.py
+Important: On Windows, run your terminal as Administrator — the keyboard library needs elevated privileges for global hotkeys.
 
-### **7. Key Components**
+Key	Action
+Z	Capture the screen and solve the visible problem
+Esc	Shut down the assistant instantly
+Output:
 
-#### **Agents**
+Full explanation and code appear in the terminal
 
-- **Screen Capture Agent**: Captures the screen and extracts text using OCR.
-- **Question Not Found Agent**: Handles cases where no question is found and provides feedback.
-- **Answer Agent**: Uses GPT-3.5 to answer coding questions with advanced reasoning and RAG support.
+answers/latest_answer.md — full markdown answer
 
-#### **Tasks**
+answers/latest_code.<ext> — pasteable solution in the detected language
 
-- **capture_and_identify_task**: Captures the screen and identifies coding questions.
-- **handle_no_question_task**: Provides feedback if no question is found.
-- **answer_question_task**: Generates an answer using GPT-3.5 and RAG.
+qa.db — SQLite history
 
-#### **Tools**
+7. Key Components
+Agents
+Screen Capture Specialist — Defined for compatibility. Not actively used since capture runs directly.
 
-- **CaptureScreenTool**: Captures the screen and saves it as an image file.
-- **ExtractQuestionTool**: Extracts coding questions from screenshots using Tesseract OCR.
-- **AnswerQuestionTool**: Sends coding questions to GPT-3.5 for answers.
-- **RAGSearchTool**: Supports RAG by searching the knowledge base for relevant information.
+Coding Expert — Receives the problem and language, generates a judge-ready solution.
 
-#### **LangGraph Workflow**
+Helpful Assistant — Handles the "no question found" case.
 
-- **wait_for_next_trigger**: Waits for the user to press `Ctrl+S`.
-- **capture_and_identify**: Captures the screen and extracts a coding question.
-- **check_question_found**: Determines whether a question was found in the screenshot.
-- **answer_question**: Generates an answer using GPT-3.5.
-- **store_result**: Stores the question and answer in the database.
+Tasks
+capture_and_identify_task — Instructs the agent to return raw OCR text.
 
-#### **Database**
+answer_question_task — Language-aware prompt that adapts to Python, JavaScript, Go, Rust, etc.
 
-- The **SQLite** database (`qa.db`) stores all extracted coding questions and their corresponding answers. It is initialized in `database.py` and is updated with every interaction.
+handle_no_question_task — Fallback message.
 
-#### **RAG Support**
+Tools
+CaptureAndExtractTool — Takes a screenshot, runs Tesseract OCR, returns the extracted text. Called directly from nodes.py rather than through the LLM, avoiding tool-schema serialization issues.
 
-- **RAG (Retrieval Augmented Generation)** is implemented using the `KnowledgeBase` class in `rag.py`. This supports the retrieval of relevant documents from a knowledge base to provide context-aware answers.
+LangGraph Workflow
+Node	Purpose
+wait_for_next_trigger	Blocks on Z
+capture_and_identify	Screenshot + OCR + language detection
+check_question_found	Pass-through to conditional router
+answer_question	Calls the CrewAI answer agent
+handle_no_question	Friendly retry message
+store_result	Saves to SQLite + disk
+Database
+SQLite (qa.db) stores every Q&A pair. Managed via database.py with init_db() and save_qa_pair().
 
----
+8. Multi-Language Support
+The assistant detects the language from the OCR text (looking at the language tab near the top of the page) and generates solutions in that language's judge-specific format.
 
-### **8. Logging with Weave and LangSmith**
+Language	Detection Keyword	Submission Format
+Python	python, python3	class Solution: def method(self, ...)
+JavaScript	javascript, js	var method = function(...) {...};
+TypeScript	typescript, ts	Typed function signature
+Go	go, golang	package main + func signature
+Rust	rust	impl Solution { pub fn ... }
+Java	java	class Solution { public ... }
+C++	c++, cpp	class Solution { public: ... };
+C#	c#, csharp	public class Solution { ... }
+Kotlin	kotlin	class Solution { fun ... }
+Swift	swift	class Solution { func ... }
+Ruby	ruby	Method signature only
+PHP, Scala, Haskell, Elixir, Dart, R	all supported	Site-appropriate format
+Output files use the correct extension: .py, .js, .ts, .go, .rs, .java, .cpp, .cs, .kt, .swift, .rb, etc.
 
-The application uses **Weave** and **LangSmith** for logging and event tracing. Key actions such as capturing screenshots, finding questions, and generating answers are logged in `app.log`. This provides a clear audit trail of the assistant's activities.
+9. Configuration
+All runtime configuration lives in .env:
 
----
+Variable	Purpose
+OPENAI_API_BASE	FreeLLMAPI router URL
+OPENAI_API_KEY	FreeLLMAPI unified key
+OPENAI_MODEL_NAME	Preferred model (or auto)
+CREWAI_*	Telemetry opt-out
+LANGCHAIN_TRACING_V2	Set to false to disable LangSmith
+Recursion limit — Set in main.py:
 
-### **9. Dependencies**
+python
+app.invoke({}, {"recursion_limit": 1000})
+10. Dependencies
+CrewAI — Multi-agent orchestration
 
-Install dependencies via `requirements.txt` or manually as listed below:
+LangGraph — Workflow state machine
 
-- **CrewAI**: Multi-agent architecture.
-- **LangGraph**: State graph management.
-- **Weave**: Structured logging.
-- **LangSmith**: Event tracing.
-- **OpenAI**: GPT-3.5 API for question answering.
-- **Pytesseract**: OCR library for extracting text from screenshots.
-- **Pillow**: Image handling and manipulation.
-- **SQLite**: Database for storing questions and answers.
-- **Tesseract**: OCR engine for recognizing text from screenshots.
+Pillow + ImageGrab — Screenshot capture
 
----
+pytesseract — OCR binding
 
-### **10. Future Enhancements**
+Tesseract OCR — OCR engine (system install)
 
-- **Expand RAG Knowledge Base**: Integrate with a larger dataset or knowledge base to improve the quality of retrieved information.
-- **Error Handling**: Add more robust error handling and retries for tasks such as API calls and image processing.
-- **Improved Question Identification**: Use advanced NLP techniques to better identify and classify coding questions.
-- **User Interface**: Add a simple GUI to interact with the assistant instead of relying on `Ctrl+S` key presses.
+keyboard — Global hotkeys
 
----
+python-dotenv — .env loading
 
-### **11. Contributing**
+SQLite3 — Built into Python
 
-If you'd like to contribute to this project, feel free to open an issue or submit a pull request on the Git
+11. Troubleshooting
+Symptom	Cause	Fix
+image "z" does nothing	Not running as admin	Run terminal as Administrator
+All models exhausted	FreeLLMAPI rate limit	Wait ~1 min, or add a second provider key
+model_unavailable	Model ID changed	Use auto, or check /v1/models
+invalid JSON schema for tool	Groq rejects CrewAI tool schemas	Already fixed — capture runs directly, bypassing tool calling
+SyntaxError when pasting	Type hints with invisible characters	Run code without type hints; use untyped signatures
+GraphRecursionError	Default 25-step limit	Set recursion_limit: 1000 in main.py
+Broken code from LLM	Weak model output	Press Z again to retry, or switch models
+12. Future Enhancements
+Auto-copy code to clipboard on generation
 
-Hub repository. Please ensure all contributions adhere to the project’s code of conduct and follow the contribution guidelines.
+System tray notifications when the solution is ready
 
----
+Language-specific linters (gofmt, node --check, rustc --parse-only)
 
-### **12. License**
+Codeforces stdin/stdout mode — distinguish from LeetCode's class-based format
 
-This project is licensed under the MIT License - see the `LICENSE` file for more details.
+Screenshot cropping — focus OCR on the problem panel only
 
----
+RAG knowledge base — local embeddings via sentence-transformers
 
-### **Conclusion**
+Problem history browser — search qa.db for previously solved problems
 
-The **Coding Assistant AI** is a powerful multi-agent system for answering coding questions by combining OCR, GPT-3.5, and retrieval-augmented generation (RAG). With its modular design and extensive logging, it provides a strong foundation for automating coding assistance and task management.
+Multi-monitor support — capture the display with the active window
 
-Happy Coding!
+13. License
+MIT License — see LICENSE for details.
+
+Happy solving. Press Z. Get code. Paste. Done.
