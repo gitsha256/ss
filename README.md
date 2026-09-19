@@ -136,7 +136,7 @@ The application is built around a multi-agent system where each agent performs a
    ```
 
 2. **Trigger the Workflow**:
-   - Press `Ctrl+S` to capture a screenshot and start the question identification and answering process.
+   - Press `z` to capture a screenshot and start the question identification and answering process.
 
 3. **Logging**:
    - Logs will be written to `app.log` by Weave, capturing all important events.
