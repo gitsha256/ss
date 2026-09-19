@@ -153,7 +153,7 @@ Ensure you have the following prerequisites installed on your system:
   - **Ubuntu / Debian**: `sudo apt update && sudo apt install -y tesseract-ocr`
   - **macOS**: `brew install tesseract`
 - **FreeLLMAPI Router** (or any OpenAI-compatible proxy):
-  - Download and install the desktop app from [FreeLLMAPI Releases](https://github.com/).
+  - Download and install the desktop app from [FreeLLMAPI Releases](https://github.com/tashfeenahmed/freellmapi/releases).
   - Ensure the local server is running (defaults to `http://localhost:3001`).
 
 ---
