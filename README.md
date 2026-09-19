@@ -165,7 +165,7 @@ Ensure you have the following prerequisites installed on your system:
 ```bash
 # Clone repository
 git clone https://github.com/yourusername/coding-assistant-ai.git
-cd coding-assistant-ai
+cd ss
 
 # Create virtual environment
 python -m venv venv
