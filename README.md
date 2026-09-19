@@ -51,7 +51,7 @@ The **Coding Assistant AI** is an intelligent assistant application that capture
 The application is built around a multi-agent system where each agent performs a specific task. The process is orchestrated using LangGraph, which manages the flow from screen capture to question identification and answer generation.
 
 #### High-Level Workflow:
-1. **Ctrl+S Trigger**: The user presses `z`, triggering the screen capture agent.
+1. **z Trigger**: The user presses `z`, triggering the screen capture agent.
 2. **Screenshot and OCR**: The screenshot is processed to extract a coding question using OCR.
 3. **Agent Workflow**: If a question is found, the answer agent generates a response using GPT-3.5. If no question is found, a handling agent provides feedback.
 4. **Database Storage**: The question and its corresponding answer are saved in the database.
@@ -62,7 +62,7 @@ The application is built around a multi-agent system where each agent performs a
 ### **4. File Structure**
 
 ```
-/coding-assistant-ai/
+/ss/
 │
 ├── /screenshots/          # Stores screenshots taken by the assistant
 ├── agents.py              # Defines CrewAI agents for capturing, extracting, and answering questions
